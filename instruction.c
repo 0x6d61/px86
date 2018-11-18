@@ -6,7 +6,7 @@
 #include "instruction.h"
 #include "emulator.h"
 #include "emulator_function.h"
-
+#include "bios.h"
 #include "modrm.h"
 #include "io.h"
 
@@ -247,6 +247,18 @@ static void out_dx_al(Emulator* emu) {
 	emu->eip += 1;
 }
 
+static void swi(Emulator* emu) {
+	uint8_t int_index = get_code8(emu,1);
+	emu->eip += 2;
+	switch(int_index) {
+		case 0x10:
+			bios_video(emu);
+			break;
+		default:
+			printf("unknown interrput: 0x%02x\n",int_index);
+	}
+}
+
 static void code_83(Emulator* emu) {
 	emu->eip += 1;
 	ModRM modrm;
@@ -323,6 +335,7 @@ void init_instructions(void) {
 	instructions[0xC7] = mov_rm32_imm32;
 	instructions[0xC9] = leave;
 
+	instructions[0xCD] = swi;
 	instructions[0xE8] = call_rel32;
 	instructions[0xE9] = near_jump;
 	instructions[0xEB] = short_jump;
